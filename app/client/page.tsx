@@ -6,7 +6,7 @@ import {
   getSession,
   clearSession,
   getProjectByClientId,
-  getDeadlineColor,
+  getProjectDisplayColor,
   colorStyles,
   formatCountdown,
   type Project,
@@ -60,13 +60,15 @@ export default function ClientView() {
   const [loading, setLoading] = useState(true);
 
   const refreshCountdown = useCallback((p: Project) => {
+    setColor(getProjectDisplayColor(p));
     if (p.deadline) {
-      setColor(getDeadlineColor(p.deadline));
       setCountdown(formatCountdown(p.deadline));
+      return;
     }
+    setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: false });
   }, []);
 
-  useEffect(() => {
+  const syncProject = useCallback(() => {
     const session = getSession();
     if (!session || session.role !== "client") {
       router.replace("/");
@@ -77,19 +79,33 @@ export default function ClientView() {
       router.replace("/");
       return;
     }
-    setProject(found);
+    setProject((prev) => {
+      if (prev && JSON.stringify(prev) === JSON.stringify(found)) return prev;
+      return found;
+    });
     refreshCountdown(found);
     setLoading(false);
   }, [router, refreshCountdown]);
 
-  // Live countdown ticker
   useEffect(() => {
-    if (!project?.deadline) return;
-    const interval = setInterval(() => {
-      refreshCountdown(project);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [project, refreshCountdown]);
+    syncProject();
+  }, [syncProject]);
+
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (!e.key || e.key === "dashboard_projects" || e.key === "dashboard_session") {
+        syncProject();
+      }
+    }
+
+    window.addEventListener("storage", onStorage);
+    const interval = setInterval(syncProject, 3000);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      clearInterval(interval);
+    };
+  }, [syncProject]);
 
   function handleLogout() {
     clearSession();

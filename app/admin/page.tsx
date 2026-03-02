@@ -9,6 +9,7 @@ import {
   upsertProject,
   deleteProject,
   getDeadlineColor,
+  getProjectDisplayColor,
   colorStyles,
   type Project,
 } from "@/lib/store";
@@ -40,6 +41,7 @@ const EMPTY_FORM: Omit<Project, "id" | "createdAt"> = {
   clientId: "",
   deadline: "",
   status: "active",
+  clientViewColorOverride: undefined,
   notes: "",
 };
 
@@ -55,6 +57,12 @@ function deadlineDaysLeft(deadline: string): string {
 function statusLabel(status: Project["status"]) {
   return { active: "Activo", completed: "Completado", paused: "Pausado" }[status];
 }
+
+const clientColorLabel = {
+  green: "Verde",
+  yellow: "Amarillo",
+  red: "Rojo",
+} as const;
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -95,6 +103,7 @@ export default function AdminDashboard() {
       clientId: project.clientId,
       deadline: project.deadline,
       status: project.status,
+      clientViewColorOverride: project.clientViewColorOverride,
       notes: project.notes,
     });
     setModalOpen(true);
@@ -188,14 +197,14 @@ export default function AdminDashboard() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {projects.map((project) => {
-              const color = project.deadline ? getDeadlineColor(project.deadline) : "gray";
+              const color = getProjectDisplayColor(project);
               const styles = colorStyles[color];
               const daysLeft = project.deadline ? deadlineDaysLeft(project.deadline) : "Sin deadline";
 
               return (
                 <Card
                   key={project.id}
-                  className={`border-2 ${styles.border} ${styles.bg} transition-all duration-200 relative overflow-hidden`}
+                  className={`border ${styles.border} ${styles.bg} transition-all duration-200 relative overflow-hidden shadow-xl shadow-black/20 backdrop-blur`}
                 >
                   {/* Color strip */}
                   <div className={`absolute top-0 left-0 right-0 h-1 ${colorDot[color]}`} />
@@ -232,6 +241,15 @@ export default function AdminDashboard() {
                         </span>
                       </div>
                     )}
+
+                    <div className="text-xs text-zinc-400">
+                      Color vista cliente:{" "}
+                      <span className={`font-medium ${styles.text}`}>
+                        {project.clientViewColorOverride
+                          ? clientColorLabel[project.clientViewColorOverride]
+                          : "Automático (por fecha)"}
+                      </span>
+                    </div>
 
                     {project.notes && (
                       <p className="text-zinc-500 text-xs italic line-clamp-2">{project.notes}</p>
@@ -332,6 +350,29 @@ export default function AdminDashboard() {
                     <SelectItem value="active">Activo</SelectItem>
                     <SelectItem value="completed">Completado</SelectItem>
                     <SelectItem value="paused">Pausado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-zinc-300">Color vista cliente</Label>
+                <Select
+                  value={form.clientViewColorOverride ?? "auto"}
+                  onValueChange={(v) =>
+                    setForm({
+                      ...form,
+                      clientViewColorOverride: v === "auto" ? undefined : (v as "green" | "yellow" | "red"),
+                    })
+                  }
+                >
+                  <SelectTrigger className="bg-zinc-800 border-zinc-600 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-800 border-zinc-700 text-white">
+                    <SelectItem value="auto">Automático (por fecha)</SelectItem>
+                    <SelectItem value="green">Verde</SelectItem>
+                    <SelectItem value="yellow">Amarillo</SelectItem>
+                    <SelectItem value="red">Rojo</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

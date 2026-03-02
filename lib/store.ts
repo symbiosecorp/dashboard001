@@ -6,10 +6,12 @@ export interface Project {
   clientId: string;
   deadline: string; // ISO date string
   status: "active" | "completed" | "paused";
+  clientViewColorOverride?: ClientViewColorOverride;
   notes: string;
   createdAt: string;
 }
 
+export type ClientViewColorOverride = "green" | "yellow" | "red";
 export type DeadlineColor = "green" | "yellow" | "orange" | "red" | "gray";
 
 export function getDeadlineColor(deadline: string): DeadlineColor {
@@ -25,41 +27,47 @@ export function getDeadlineColor(deadline: string): DeadlineColor {
   return "green";
 }
 
+export function getProjectDisplayColor(project: Pick<Project, "deadline" | "clientViewColorOverride">): DeadlineColor {
+  if (project.clientViewColorOverride) return project.clientViewColorOverride;
+  if (!project.deadline) return "gray";
+  return getDeadlineColor(project.deadline);
+}
+
 export const colorStyles: Record<DeadlineColor, { bg: string; border: string; badge: string; text: string; ring: string }> = {
   green: {
-    bg: "bg-emerald-50 dark:bg-emerald-950/20",
-    border: "border-emerald-300 dark:border-emerald-700",
-    badge: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
-    text: "text-emerald-700 dark:text-emerald-400",
-    ring: "ring-emerald-400",
+    bg: "bg-emerald-950/30",
+    border: "border-emerald-500/45",
+    badge: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/35",
+    text: "text-emerald-300",
+    ring: "ring-emerald-500/30",
   },
   yellow: {
-    bg: "bg-yellow-50 dark:bg-yellow-950/20",
-    border: "border-yellow-300 dark:border-yellow-700",
-    badge: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-    text: "text-yellow-700 dark:text-yellow-400",
-    ring: "ring-yellow-400",
+    bg: "bg-yellow-950/25",
+    border: "border-yellow-500/45",
+    badge: "bg-yellow-500/15 text-yellow-300 border border-yellow-500/35",
+    text: "text-yellow-300",
+    ring: "ring-yellow-500/30",
   },
   orange: {
-    bg: "bg-orange-50 dark:bg-orange-950/20",
-    border: "border-orange-300 dark:border-orange-700",
-    badge: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-    text: "text-orange-700 dark:text-orange-400",
-    ring: "ring-orange-400",
+    bg: "bg-orange-950/25",
+    border: "border-orange-500/45",
+    badge: "bg-orange-500/15 text-orange-300 border border-orange-500/35",
+    text: "text-orange-300",
+    ring: "ring-orange-500/30",
   },
   red: {
-    bg: "bg-red-50 dark:bg-red-950/20",
-    border: "border-red-300 dark:border-red-700",
-    badge: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-    text: "text-red-700 dark:text-red-400",
-    ring: "ring-red-400",
+    bg: "bg-red-950/25",
+    border: "border-red-500/45",
+    badge: "bg-red-500/15 text-red-300 border border-red-500/35",
+    text: "text-red-300",
+    ring: "ring-red-500/30",
   },
   gray: {
-    bg: "bg-zinc-50 dark:bg-zinc-900/20",
-    border: "border-zinc-300 dark:border-zinc-700",
-    badge: "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200",
-    text: "text-zinc-500 dark:text-zinc-400",
-    ring: "ring-zinc-400",
+    bg: "bg-zinc-900/70",
+    border: "border-zinc-600/70",
+    badge: "bg-zinc-800 text-zinc-200 border border-zinc-600/70",
+    text: "text-zinc-300",
+    ring: "ring-zinc-500/30",
   },
 };
 
